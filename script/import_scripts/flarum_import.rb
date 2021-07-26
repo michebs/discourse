@@ -8,10 +8,10 @@ require File.expand_path(File.dirname(__FILE__) + "/base.rb")
 
 class ImportScripts::FLARUM < ImportScripts::Base
   #SET THE APPROPRIATE VALUES FOR YOUR MYSQL CONNECTION
-  FLARUM_HOST ||= ENV['FLARUM_HOST'] || "db_host"
-  FLARUM_DB ||= ENV['FLARUM_DB'] || "db_name"
+  FLARUM_HOST ||= ENV['FLARUM_HOST'] || "localhost"
+  FLARUM_DB ||= ENV['FLARUM_DB'] || "flarum"
   BATCH_SIZE ||= 1000
-  FLARUM_USER ||= ENV['FLARUM_USER'] || "db_user"
+  FLARUM_USER ||= ENV['FLARUM_USER'] || "root"
   FLARUM_PW ||= ENV['FLARUM_PW'] || "db_user_pass"
 
   def initialize
@@ -20,7 +20,7 @@ class ImportScripts::FLARUM < ImportScripts::Base
     @client = Mysql2::Client.new(
       host: FLARUM_HOST,
       username: FLARUM_USER,
-      password: FLARUM_PW,
+      # password: FLARUM_PW,
       database: FLARUM_DB
     )
   end
