@@ -24,7 +24,7 @@ export function applyLocalDates(dates, siteSettings) {
       "beforeend",
       `
         <svg class="fa d-icon d-icon-globe-americas svg-icon" xmlns="http://www.w3.org/2000/svg">
-          <use xlink:href="#globe-americas"></use>
+          <use href="#globe-americas"></use>
         </svg>
         <span class="relative-time">${localDateBuilder.formated}</span>
       `
@@ -69,6 +69,16 @@ function _rangeElements(element) {
   if (!element.parentElement) {
     return [];
   }
+
+  // TODO: element.parentElement.children.length !== 2 is a fallback to old solution for ranges
+  // Condition can be removed after migration to [date-range]
+  if (
+    element.dataset.range !== "true" &&
+    element.parentElement.children.length !== 2
+  ) {
+    return [element];
+  }
+
   return Array.from(element.parentElement.children).filter(
     (span) => span.dataset.date
   );

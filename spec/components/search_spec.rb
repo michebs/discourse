@@ -5,6 +5,7 @@ require 'rails_helper'
 
 describe Search do
   fab!(:admin) { Fabricate(:admin) }
+  fab!(:topic) { Fabricate(:topic) }
 
   before do
     SearchIndexer.enable
@@ -671,7 +672,6 @@ describe Search do
       end
 
       it 'displays multiple results within a topic' do
-        topic = Fabricate(:topic)
         topic2 = Fabricate(:topic)
 
         new_post('this is the other post I am posting', topic2, created_at: 6.minutes.ago)
@@ -1086,7 +1086,6 @@ describe Search do
     it 'can use tag as a search context' do
       tag = Fabricate(:tag, name: 'important-stuff')
 
-      topic = Fabricate(:topic)
       topic_no_tag = Fabricate(:topic)
       Fabricate(:topic_tag, tag: tag, topic: topic)
 
@@ -1100,26 +1099,85 @@ describe Search do
 
   end
 
-  describe 'Chinese search' do
-    let(:sentence) { 'Discourse中国的基础设施网络正在组装' }
-    let(:sentence_t) { 'Discourse太平山森林遊樂區' }
+  context 'Japanese search' do
+    let!(:topic) { Fabricate(:topic) }
+    let!(:post) { Fabricate(:post, topic: topic, raw: 'This is some japanese text 日本が大好きです。') }
+    let!(:topic_2) { Fabricate(:topic, title: '日本の話題、 more japanese text') }
+    let!(:post_2) { Fabricate(:post, topic: topic_2) }
 
-    it 'splits English / Chinese and filter out stop words' do
+    describe '.prepare_data' do
+      it 'removes punctuations' do
+        SiteSetting.search_tokenize_japanese = true
+
+        expect(Search.prepare_data(post.raw)).to eq("This is some japanese text 日本 が 大好き です")
+      end
+    end
+
+    describe '.execute' do
+      before do
+        @old_default = SiteSetting.defaults.get(:min_search_term_length)
+        SiteSetting.defaults.set_regardless_of_locale(:min_search_term_length, 1)
+        SiteSetting.refresh!
+      end
+
+      after do
+        SiteSetting.defaults.set_regardless_of_locale(:min_search_term_length, @old_default)
+        SiteSetting.refresh!
+      end
+
+      it 'finds posts containing Japanese text if tokenization is forced' do
+        SiteSetting.search_tokenize_japanese = true
+
+        expect(Search.execute('日本').posts.map(&:id)).to eq([post_2.id, post.id])
+        expect(Search.execute('日').posts.map(&:id)).to eq([post_2.id, post.id])
+      end
+
+      it "find posts containing search term when site's locale is set to Japanese" do
+        SiteSetting.default_locale = 'ja'
+
+        expect(Search.execute('日本').posts.map(&:id)).to eq([post_2.id, post.id])
+        expect(Search.execute('日').posts.map(&:id)).to eq([post_2.id, post.id])
+      end
+
+      it 'does not include superfluous spaces in blurbs' do
+        SiteSetting.default_locale = 'ja'
+
+        post.update!(raw: '場サアマネ織企ういかせ竹域ヱイマ穂基ホ神3予読ずねいぱ松査ス禁多サウ提懸イふ引小43改こょドめ。深とつぐ主思料農ぞかル者杯検める活分えほづぼ白犠')
+
+        results = Search.execute('ういかせ竹域', type_filter: 'topic')
+
+        expect(results.posts.length).to eq(1)
+        expect(results.blurb(results.posts.first)).to include('ういかせ竹域')
+      end
+    end
+  end
+
+  describe 'Chinese search' do
+    let(:sentence) { 'Discourse is a software company 中国的基础设施网络正在组装。' }
+    let(:sentence_t) { 'Discourse is a software company 太平山森林遊樂區。' }
+
+    it 'splits English / Chinese and filter out Chinese stop words' do
       SiteSetting.default_locale = 'zh_CN'
-      data = Search.prepare_data(sentence).split(' ')
-      expect(data).to eq(["Discourse", "中国", "基础设施", "网络", "正在", "组装"])
+      data = Search.prepare_data(sentence)
+      expect(data).to eq("Discourse is a software company 中国 基础设施 网络 正在 组装")
     end
 
     it 'splits for indexing and filter out stop words' do
       SiteSetting.default_locale = 'zh_CN'
-      data = Search.prepare_data(sentence, :index).split(' ')
-      expect(data).to eq(["Discourse", "中国", "基础设施", "网络", "正在", "组装"])
+      data = Search.prepare_data(sentence, :index)
+      expect(data).to eq("Discourse is a software company 中国 基础设施 网络 正在 组装")
     end
 
     it 'splits English / Traditional Chinese and filter out stop words' do
       SiteSetting.default_locale = 'zh_TW'
-      data = Search.prepare_data(sentence_t).split(' ')
-      expect(data).to eq(["Discourse", "太平山", "森林", "遊樂區"])
+      data = Search.prepare_data(sentence_t)
+      expect(data).to eq("Discourse is a software company 太平山 森林 遊樂區")
+    end
+
+    it 'does not split strings beginning with numeric chars into different segments' do
+      SiteSetting.default_locale = 'zh_TW'
+      data = Search.prepare_data("#{sentence} 123abc")
+      expect(data).to eq("Discourse is a software company 中国 基础设施 网络 正在 组装 123abc")
     end
 
     it 'finds chinese topic based on title' do
@@ -1127,6 +1185,7 @@ describe Search do
 
       SiteSetting.default_locale = 'zh_TW'
       SiteSetting.min_search_term_length = 1
+
       topic = Fabricate(:topic, title: 'My Title Discourse社區指南')
       post = Fabricate(:post, topic: topic)
 
@@ -1137,21 +1196,29 @@ describe Search do
     it 'finds chinese topic based on title if tokenization is forced' do
       skip("skipped until pg app installs the db correctly") if RbConfig::CONFIG["arch"] =~ /darwin/
 
-      SiteSetting.search_tokenize_chinese_japanese_korean = true
-      SiteSetting.min_search_term_length = 1
+      begin
+        SiteSetting.search_tokenize_chinese = true
+        default_min_search_term_length = SiteSetting.defaults.get(:min_search_term_length)
+        SiteSetting.defaults.set_regardless_of_locale(:min_search_term_length, 1)
+        SiteSetting.refresh!
 
-      topic = Fabricate(:topic, title: 'My Title Discourse社區指南')
-      post = Fabricate(:post, topic: topic)
+        topic = Fabricate(:topic, title: 'My Title Discourse社區指南')
+        post = Fabricate(:post, topic: topic)
 
-      expect(Search.execute('社區指南').posts.first.id).to eq(post.id)
-      expect(Search.execute('指南').posts.first.id).to eq(post.id)
+        expect(Search.execute('社區指南').posts.first.id).to eq(post.id)
+        expect(Search.execute('指南').posts.first.id).to eq(post.id)
+      ensure
+        if default_min_search_term_length
+          SiteSetting.defaults.set_regardless_of_locale(:min_search_term_length, default_min_search_term_length)
+          SiteSetting.refresh!
+        end
+      end
     end
   end
 
   describe 'Advanced search' do
 
     it 'supports pinned' do
-      topic = Fabricate(:topic)
       Fabricate(:post, raw: 'hi this is a test 123 123', topic: topic)
       _post = Fabricate(:post, raw: 'boom boom shake the room', topic: topic)
 
@@ -1162,7 +1229,6 @@ describe Search do
     end
 
     it 'supports wiki' do
-      topic = Fabricate(:topic)
       topic_2 = Fabricate(:topic)
       post = Fabricate(:post, raw: 'this is a test 248', wiki: true, topic: topic)
       Fabricate(:post, raw: 'this is a test 248', wiki: false, topic: topic_2)
@@ -1173,7 +1239,6 @@ describe Search do
     end
 
     it 'supports searching for posts that the user has seen/unseen' do
-      topic = Fabricate(:topic)
       topic_2 = Fabricate(:topic)
       post = Fabricate(:post, raw: 'logan is longan', topic: topic)
       post_2 = Fabricate(:post, raw: 'longan is logan', topic: topic_2)
@@ -1231,7 +1296,6 @@ describe Search do
     end
 
     it 'supports in:first, user:, @username' do
-      topic = Fabricate(:topic)
       post_1 = Fabricate(:post, raw: 'hi this is a test 123 123', topic: topic)
       post_2 = Fabricate(:post, raw: 'boom boom shake the room test', topic: topic)
 
@@ -1253,15 +1317,55 @@ describe Search do
       expect(Search.execute("@#{post_1.user.username}").posts).to contain_exactly(post_1)
     end
 
-    it 'supports group' do
-      topic = Fabricate(:topic, created_at: 3.months.ago)
-      post = Fabricate(:post, raw: 'hi this is a test 123 123', topic: topic)
+    context "searching for posts made by users of a group" do
+      fab!(:topic) { Fabricate(:topic, created_at: 3.months.ago) }
+      fab!(:user) { Fabricate(:user) }
+      fab!(:user_2) { Fabricate(:user) }
+      fab!(:user_3) { Fabricate(:user) }
+      fab!(:group) { Fabricate(:group, name: "Like_a_Boss").tap { |g| g.add(user) } }
+      fab!(:group_2) { Fabricate(:group).tap { |g| g.add(user_2) } }
+      let!(:post) { Fabricate(:post, raw: 'hi this is a test 123 123', topic: topic, user: user) }
+      let!(:post_2) { Fabricate(:post, user: user_2) }
 
-      group = Group.create!(name: "Like_a_Boss")
-      GroupUser.create!(user_id: post.user_id, group_id: group.id)
+      it 'should not return any posts if group does not exist' do
+        group.update!(
+          visibility_level: Group.visibility_levels[:public],
+          members_visibility_level: Group.visibility_levels[:public]
+        )
 
-      expect(Search.execute('group:like_a_boss').posts.length).to eq(1)
-      expect(Search.execute('group:"like a brick"').posts.length).to eq(0)
+        expect(Search.execute('group:99999').posts).to eq([])
+      end
+
+      it 'should return the right posts for a public group' do
+        group.update!(
+          visibility_level: Group.visibility_levels[:public],
+          members_visibility_level: Group.visibility_levels[:public]
+        )
+
+        expect(Search.execute('group:like_a_boss').posts).to contain_exactly(post)
+        expect(Search.execute("group:#{group.id}").posts).to contain_exactly(post)
+      end
+
+      it "should return the right posts for a public group with members' visibility restricted to logged on users" do
+        group.update!(
+          visibility_level: Group.visibility_levels[:public],
+          members_visibility_level: Group.visibility_levels[:logged_on_users]
+        )
+
+        expect(Search.execute("group:#{group.id}").posts).to eq([])
+        expect(Search.execute("group:#{group.id}", guardian: Guardian.new(user_3)).posts).to contain_exactly(post)
+      end
+
+      it "should return the right posts for a group with visibility restricted to logged on users with members' visibility restricted to members" do
+        group.update!(
+          visibility_level: Group.visibility_levels[:logged_on_users],
+          members_visibility_level: Group.visibility_levels[:members]
+        )
+
+        expect(Search.execute("group:#{group.id}").posts).to eq([])
+        expect(Search.execute("group:#{group.id}", guardian: Guardian.new(user_3)).posts).to eq([])
+        expect(Search.execute("group:#{group.id}", guardian: Guardian.new(user)).posts).to contain_exactly(post)
+      end
     end
 
     it 'supports badge' do
@@ -1569,7 +1673,6 @@ describe Search do
       end
 
       it 'can find posts with non-latin tag' do
-        topic = Fabricate(:topic)
         topic.tags = [Fabricate(:tag, name: 'さようなら')]
         post = Fabricate(:post, raw: 'Testing post', topic: topic)
 
@@ -1577,7 +1680,6 @@ describe Search do
       end
 
       it 'can find posts with thai tag' do
-        topic = Fabricate(:topic)
         topic.tags = [Fabricate(:tag, name: 'เรซิ่น')]
         post = Fabricate(:post, raw: 'Testing post', topic: topic)
 
@@ -1783,27 +1885,6 @@ describe Search do
       results = Search.execute('สวัสดี', type_filter: 'topic')
       expect(results.posts.length).to eq(1)
     end
-  end
-
-  context 'CJK segmentation' do
-    before do
-      SiteSetting.search_tokenize_chinese_japanese_korean = true
-      SiteSetting.min_search_term_length = 1
-    end
-
-    let!(:post1) do
-      Fabricate(:post, raw: '場サアマネ織企ういかせ竹域ヱイマ穂基ホ神3予読ずねいぱ松査ス禁多サウ提懸イふ引小43改こょドめ。深とつぐ主思料農ぞかル者杯検める活分えほづぼ白犠')
-    end
-
-    it('does not include superfluous spaces in blurbs') do
-
-      results = Search.execute('ういかせ竹域', type_filter: 'topic')
-      expect(results.posts.length).to eq(1)
-
-      expect(results.blurb(results.posts.first)).to include('ういかせ竹域')
-
-    end
-
   end
 
   context 'include_diacritics' do

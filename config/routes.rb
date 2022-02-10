@@ -178,11 +178,7 @@ Discourse::Application.routes.draw do
         resources :staff_action_logs,     only: [:index]
         get 'staff_action_logs/:id/diff' => 'staff_action_logs#diff'
         resources :screened_emails,       only: [:index, :destroy]
-        resources :screened_ip_addresses, only: [:index, :create, :update, :destroy] do
-          collection do
-            post "roll_up"
-          end
-        end
+        resources :screened_ip_addresses, only: [:index, :create, :update, :destroy]
         resources :screened_urls,         only: [:index]
         resources :search_logs,           only: [:index]
         get 'search_logs/term/' => 'search_logs#term'
@@ -428,6 +424,8 @@ Discourse::Application.routes.draw do
       put "#{root_path}/admin-login" => "users#admin_login"
       post "#{root_path}/toggle-anon" => "users#toggle_anon"
       post "#{root_path}/read-faq" => "users#read_faq"
+      get "#{root_path}/recent-searches" => "users#recent_searches", constraints: { format: 'json' }
+      delete "#{root_path}/recent-searches" => "users#reset_recent_searches", constraints: { format: 'json' }
       get "#{root_path}/search/users" => "users#search_users"
 
       get({ "#{root_path}/account-created/" => "users#account_created" }.merge(index == 1 ? { as: :users_account_created } : { as: :old_account_created }))
@@ -577,6 +575,7 @@ Discourse::Application.routes.draw do
     get "posts/:id/reply-ids/all" => "posts#all_reply_ids"
     get "posts/:username/deleted" => "posts#deleted_posts", constraints: { username: RouteFormat.username }
     get "posts/:username/flagged" => "posts#flagged_posts", constraints: { username: RouteFormat.username }
+    get "posts/:username/pending" => "posts#pending", constraints: { username: RouteFormat.username }
 
     %w{groups g}.each do |root_path|
       resources :groups, id: RouteFormat.username, path: root_path do
@@ -630,6 +629,8 @@ Discourse::Application.routes.draw do
         end
       end
     end
+
+    resources :associated_groups, only: %i[index], constraints: AdminConstraint.new
 
     # aliases so old API code works
     delete "admin/groups/:id/members" => "groups#remove_member", constraints: AdminConstraint.new
@@ -808,6 +809,7 @@ Discourse::Application.routes.draw do
 
     # Topic routes
     get "t/id_for/:slug" => "topics#id_for_slug"
+    get "t/external_id/:external_id" => "topics#show_by_external_id", format: :json, constrains: { external_id: /\A[\w-]+\z/ }
     get "t/:slug/:topic_id/print" => "topics#show", format: :html, print: true, constraints: { topic_id: /\d+/ }
     get "t/:slug/:topic_id/wordpress" => "topics#wordpress", constraints: { topic_id: /\d+/ }
     get "t/:topic_id/wordpress" => "topics#wordpress", constraints: { topic_id: /\d+/ }

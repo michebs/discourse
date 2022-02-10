@@ -29,6 +29,11 @@ const Group = RestModel.extend({
     return isEmpty(value) ? "" : value;
   },
 
+  @discourseComputed("associated_group_ids")
+  associatedGroupIds(value) {
+    return isEmpty(value) ? [] : value;
+  },
+
   @discourseComputed("automatic")
   type(automatic) {
     return automatic ? "automatic" : "custom";
@@ -238,6 +243,7 @@ const Group = RestModel.extend({
       imap_mailbox_name: this.imap_mailbox_name,
       imap_enabled: this.imap_enabled,
       email_username: this.email_username,
+      email_from_alias: this.email_from_alias,
       email_password: this.email_password,
       flair_icon: null,
       flair_upload_id: null,
@@ -276,6 +282,11 @@ const Group = RestModel.extend({
         }
       }
     );
+
+    let agIds = this.associated_group_ids;
+    if (agIds) {
+      attrs["associated_group_ids"] = agIds.length ? agIds : [null];
+    }
 
     if (this.flair_type === "icon") {
       attrs["flair_icon"] = this.flair_icon;

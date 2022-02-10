@@ -225,8 +225,6 @@ fr:
       <p>Si vous vous souvenez de votre mot de passe, vous pouvez vous <a href="%{base_url}/login">connecter</a>.</p>
 
       <p>Sinon, veuillez <a href="%{base_url}/password-reset">réinitialiser votre mot de passe</a>.</p>
-    not_found_template_link: |
-      La date d'expiration de <p>l'invitation à <a href="%{base_url}">%{site_name}</a> a été dépassée. Nous vous invitons à demander à la personne qui vous a invité(e) de vous faire parvenir une nouvelle invitation.</p>
     user_exists: "Inutile d'inviter <b>%{email}</b>, cette personne <a href='%{base_path}/u/%{username}/summary'>dispose déjà d'un compte !</a>"
     invite_exists: "Vous avez déjà invité <b>%{email}</b>."
     invalid_email: "%{email} n'est pas une adresse de courriel valable."
@@ -333,8 +331,6 @@ fr:
   too_many_links:
     one: "Nous sommes désolés, les nouveaux utilisateurs ne peuvent insérer qu'un seul lien par message."
     other: "Nous sommes désolés, les nouveaux utilisateurs ne peuvent insérer que %{count} liens par message."
-  contains_blocked_word: "Votre message contient un mot qui n'est pas permis : %{word}"
-  contains_blocked_words: "Votre message contient plusieurs mots qui ne sont pas permis : %{words}"
   spamming_host: "Désolé, vous ne pouvez pas insérer de lien vers ce domaine."
   user_is_suspended: "Les utilisateurs suspendus ne sont pas autorisés à publier des messages."
   topic_not_found: "Une erreur est survenue. Peut-être que ce sujet a été fermé ou supprimé pendant que vous le regardiez ?"
@@ -880,13 +876,6 @@ fr:
   draft_backup:
     pm_title: "Brouillons relatifs à des sujets en cours de discussion."
     pm_body: "Sujet contenant des brouillons enregistrés"
-  user_activity:
-    no_bookmarks:
-      self: "Vous n'avez pas de sujet dans vos signets ; les signets vous permettent de retrouver rapidement des sujets d'intérêt."
-      search: "Aucun signet trouvé avec la requête de recherche fournie."
-      others: "Aucun signet."
-    no_drafts:
-      self: "Vous n'avez pas de brouillons. Lorsque vous commencerez à répondre à un sujet, cette réponse sera automatiquement enregistrée sous forme de nouveau brouillon."
   email_settings:
     pop3_authentication_error: "L'authentification auprès du serveur POP3 a échoué. Vérifiez le nom d'utilisateur et le mot de passe avant de réessayer."
     imap_authentication_error: "L'authentification auprès du serveur IMAP a échoué. Vérifiez le nom d'utilisateur et le mot de passe avant de réessayer."
@@ -1325,6 +1314,18 @@ fr:
         ignores_count: Ignorés
         mutes_count: Mis en sourdine
       description: "Les utilisateurs qui ont été mis en sourdine ou ignorés par de nombreux autres utilisateurs."
+    top_users_by_likes_received:
+      labels:
+        user: Utilisateur
+        qtt_like: '« J''aime » reçus'
+    top_users_by_likes_received_from_inferior_trust_level:
+      labels:
+        user: Utilisateur
+        qtt_like: '« J''aime » reçus'
+    top_users_by_likes_received_from_a_variety_of_people:
+      labels:
+        user: Utilisateur
+        qtt_like: '« J''aime » reçus'
   dashboard:
     rails_env_warning: "Votre serveur fonctionne dans l'environnement de %{env}."
     host_names_warning: "Votre fichier config/database.yml utilise le nom d'hôte par défaut. Veuillez renseigner votre nom d'hôte."
@@ -1372,7 +1373,6 @@ fr:
     min_personal_message_title_length: "Longueur minimale pour un titre de message en nombre de caractères"
     max_emojis_in_title: "Nombre maximal d'émojis permis dans le titre d'un sujet"
     min_search_term_length: "Longueur minimale en caractères du terme à rechercher"
-    search_tokenize_chinese_japanese_korean: "Forcer la recherche à segmenter les textes chinois, japonais et coréens, même sur les sites n'utilisant pas ces langues par défaut."
     search_prefer_recent_posts: "Si les recherches dans votre forum sont lentes, cette option effectue l'indexation des messages les plus récents en premier"
     search_recent_posts_size: "Combien de messages récents à garder dans l'index"
     log_search_queries: "Archiver les requêtes de recherche des utilisateurs"
@@ -1414,7 +1414,6 @@ fr:
     show_pinned_excerpt_mobile: "Afficher les extraits des sujets épinglés en vue mobile."
     show_pinned_excerpt_desktop: "Afficher les extraits des sujets épinglés en vue bureau."
     post_onebox_maxlength: "Longueur maximale en nombre de caractères d'un message Discourse intégré comme Onebox."
-    blocked_onebox_domains: "Une liste de domaines qui ne seront jamais transformés en Onebox."
     allowed_inline_onebox_domains: "Une liste de domaines qui seront transformés en Onebox s'ils ont été insérés sans titre"
     enable_inline_onebox_on_all_domains: "Ignorer le paramètre « inline_onebox_domain_allowlist » et permettre des Onebox en ligne pour tous les domaines."
     force_custom_user_agent_hosts: "Domaines pour lesquels utiliser un agent utilisateur personnalisé pour les requêtes de Onebox. (Cela est utile pour les domaines limitant les accès par agent utilisateur.)"
@@ -1498,7 +1497,6 @@ fr:
     allowed_iframes: "Une liste des préfixes du domaine src iframe que Discourse peut autoriser en toute sécurité dans les messages"
     allowed_crawler_user_agents: "Les agents utilisateurs des robots d'indexation qui sont autorisés à accéder au site. ATTENTION : CE PARAMÈTRE BLOQUERA TOUS LES ROBOTS D'INDEXATION NON LISTÉS ICI !"
     blocked_crawler_user_agents: "Mot unique insensible à la casse dans la chaîne de caractères de l'agent utilisateur identifiant les robots d'exploration Web qui ne devraient pas être autorisés à accéder au site. Ne s'applique pas si la liste d'autorisations est définie."
-    slow_down_crawler_user_agents: "Agents utilisateurs des robots d'indexation qui devraient être limités dans robots.txt avec la commande Crawl-delay"
     slow_down_crawler_rate: "Si slow_down_crawler_user_agents est défini, ce taux s'appliquera à tous les robots d'indexation (nombre de secondes d'attente entre requêtes)"
     content_security_policy: "Activer Content-Security-Policy"
     content_security_policy_report_only: "Activer Content-Security-Policy-Report-Only"
@@ -1536,7 +1534,6 @@ fr:
     blocked_email_domains: "Une liste de domaines de courriels, séparés par des barres verticales (caractère « | ») que les utilisateurs ne sont pas autorisés à utiliser pour s'inscrire. Exemple : mailinator.com|trashmail.net"
     allowed_email_domains: "Une liste de domaines de courriels, séparés par des barres verticales (caractère « | ») que les utilisateurs DOIVENT utiliser pour s'inscrire. ATTENTION : les utilisateurs avec une adresse de courriel d'un domaine non repris dans la liste ne seront pas autorisés à s'inscrire !"
     auto_approve_email_domains: "Les utilisateurs dont le domaine de l'adresse courriel appartient à cette liste seront automatiquement approuvés."
-    hide_email_address_taken: "Ne pas informer les utilisateurs qu'un compte existe avec une adresse courriel donnée lors de l'inscription ou à partir du formulaire d'oubli du mot de passe."
     log_out_strict: "Lors de la déconnexion, déconnecter TOUTES les sessions de l'utilisateur sur tous les appareils"
     version_checks: "Vérifier périodiquement les serveurs Discourse pour obtenir des informations de mises à jour et les afficher sur le tableau de bord <a href='%{base_path}/admin' target='_blank'>/admin</a>"
     new_version_emails: "Envoyer un courriel à contact_email quand une nouvelle version de Discourse est disponible."
@@ -2309,13 +2306,6 @@ fr:
     cannot_delete_has_posts:
       one: "L'utilisateur %{username} a %{count} message dans un sujet public ou message personnel, vous ne pouvez donc pas le supprimer."
       other: "L'utilisateur %{username} a %{count} messages dans des sujets publics ou messages personnels, vous ne pouvez donc pas le supprimer."
-  reviewables_reminder:
-    submitted:
-      one: "Ces éléments ont été soumis il y a plus de %{count} heure. [Nous vous invitons à les examiner](%{base_path}/review)."
-      other: "Ces éléments ont été soumis il y a plus de %{count} heures. [Nous vous invitons à les examiner](%{base_path}/review)."
-    subject_template:
-      one: "%{count} élément à examiner"
-      other: "%{count} éléments à examiner"
   unsubscribe_mailer:
     title: "Désabonnement"
     subject_template: "Confirmez que vous ne souhaitez plus recevoir de courriels de mises à jour de %{site_title}"
@@ -2535,6 +2525,27 @@ fr:
         ```
 
         Pour plus d'informations, nous vous invitons à consulter notre [charte communautaire](%{base_url}/guidelines).
+    flags_agreed_and_post_deleted_for_responders:
+      text_body_template: |
+        Bonjour,
+
+        Ce message vous est envoyé de manière automatisée par %{site_name} pour vous informer qu'un [post](%{base_url}%{url}) auquel vous aviez répondu, a été supprimé.
+
+        %{flag_reason}
+
+        Ce message a été signalé par la communauté et un responsable a décidé de le supprimer.
+
+        ``` markdown
+        %{flagged_post_raw_content}
+        ```
+
+        Auquel vous aviez répondu
+
+        ``` markdown
+        %{flagged_post_response_raw_content}
+        ```
+
+        Pour plus d'informations, nous vous invitons à consulter notre [community guidelines](%{base_url}/guidelines).
     usage_tips:
       text_body_template: |
         Pour connaître quelques astuces qui vous aideront à démarrer en tant que nouveau membre, [rendez-vous sur cette page](https://meta.discourse.org/t/fr-trucs-et-astuces-pour-nouveaux-utilisateurs/84100/).

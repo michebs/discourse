@@ -35,12 +35,10 @@ task 'assets:precompile:before' do
   require 'sprockets'
   require 'digest/sha1'
 
-  if ENV['EMBER_CLI_PROD_ASSETS']
+  if ENV['EMBER_CLI_PROD_ASSETS'] != "0"
     # Remove the assets that Ember CLI will handle for us
     Rails.configuration.assets.precompile.reject! do |asset|
-      asset.is_a?(String) &&
-        (%w(application.js admin.js ember_jquery.js pretty-text-bundle.js start-discourse.js vendor.js).include?(asset) ||
-          asset.start_with?("discourse/tests"))
+      asset.is_a?(String) && is_ember_cli_asset?(asset)
     end
   end
 end
@@ -83,6 +81,11 @@ task 'assets:flush_sw' => 'environment' do
   end
 end
 
+def is_ember_cli_asset?(name)
+  return false if ENV['EMBER_CLI_PROD_ASSETS'] == '0'
+  %w(application.js admin.js ember_jquery.js pretty-text-bundle.js start-discourse.js vendor.js).include?(name)
+end
+
 def assets_path
   "#{Rails.root}/public/assets"
 end
@@ -106,7 +109,7 @@ def compress_node(from, to)
   assets = cdn_relative_path("/assets")
   assets_additional_path = (d = File.dirname(from)) == "." ? "" : "/#{d}"
   source_map_root = assets + assets_additional_path
-  source_map_url = cdn_path "/assets/#{to}.map"
+  source_map_url = "#{File.basename(to)}.map"
   base_source_map = assets_path + assets_additional_path
 
   cmd = <<~EOS
@@ -163,6 +166,7 @@ end
 
 def max_compress?(path, locales)
   return false if Rails.configuration.assets.skip_minification.include? path
+  return false if is_ember_cli_asset?(path)
   return true unless path.include? "locales/"
 
   path_locale = path.delete_prefix("locales/").delete_suffix(".js")
@@ -250,9 +254,14 @@ def copy_ember_cli_assets
   # Copy assets and generate manifest data
   log_task_duration('Copy assets and generate manifest data') {
     Dir["#{ember_cli_assets}**/*"].each do |f|
-      if f !~ /test/ && File.file?(f)
+      if File.file?(f)
         rel_file = f.sub(ember_cli_assets, "")
-        digest = f.scan(/\-([a-f0-9]+)\./)[0][0]
+        file_digest = Digest::SHA384.digest(File.read(f))
+        digest = if f =~ /\-([a-f0-9]+)\./
+          Regexp.last_match[1]
+        else
+          Digest.hexencode(file_digest)[0...32]
+        end
 
         dest = "public/assets"
         dest_sub = dest
@@ -260,13 +269,20 @@ def copy_ember_cli_assets
           dest_sub = "#{dest}/#{Regexp.last_match[1]}"
         end
 
-        FileUtils.mkdir_p(dest_sub) unless Dir.exists?(dest_sub)
+        FileUtils.mkdir_p(dest_sub) unless Dir.exist?(dest_sub)
         log_file = File.basename(rel_file).sub("-#{digest}", "")
 
-        # It's simpler to serve the file as `application.js`
-        if log_file == "discourse.js"
+        # We need a few hacks here to move what Ember uses to what Rails wants
+        case log_file
+        when "discourse.js"
           log_file = "application.js"
           rel_file.sub!(/^discourse/, "application")
+        when "test-support.js"
+          log_file = "discourse/tests/test-support-rails.js"
+          rel_file = "discourse/tests/test-support-rails-#{digest}.js"
+        when "test-helpers.js"
+          log_file = "discourse/tests/test-helpers-rails.js"
+          rel_file = "discourse/tests/test-helpers-rails-#{digest}.js"
         end
 
         res = FileUtils.cp(f, "#{dest}/#{rel_file}")
@@ -277,7 +293,7 @@ def copy_ember_cli_assets
           "mtime" => File.mtime(f).iso8601(9),
           "size" => File.size(f),
           "digest" => digest,
-          "integrity" => "sha384-#{Base64.encode64(Digest::SHA384.digest(File.read(f))).chomp}"
+          "integrity" => "sha384-#{Base64.encode64(file_digest).chomp}"
         }
       end
     end
@@ -301,7 +317,7 @@ end
 
 task 'assets:precompile' => 'assets:precompile:before' do
 
-  copy_ember_cli_assets if ENV['EMBER_CLI_PROD_ASSETS']
+  copy_ember_cli_assets if ENV['EMBER_CLI_PROD_ASSETS'] != '0'
 
   refresh_days = GlobalSetting.refresh_maxmind_db_during_precompile_days
 
@@ -362,7 +378,7 @@ task 'assets:precompile' => 'assets:precompile:before' do
             _file = (d = File.dirname(file)) == "." ? "_#{file}" : "#{d}/_#{File.basename(file)}"
             _path = "#{assets_path}/#{_file}"
             max_compress = max_compress?(info["logical_path"], locales)
-            if File.exists?(_path)
+            if File.exist?(_path)
               STDERR.puts "Skipping: #{file} already compressed"
             elsif file.include? "discourse/tests"
               STDERR.puts "Skipping: #{file}"

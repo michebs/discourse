@@ -8,6 +8,8 @@ describe Guardian do
 
   fab!(:user) { Fabricate(:user) }
   fab!(:another_user) { Fabricate(:user) }
+  fab!(:member) { Fabricate(:user) }
+  fab!(:owner) { Fabricate(:user) }
   fab!(:moderator) { Fabricate(:moderator) }
   fab!(:admin) { Fabricate(:admin) }
   fab!(:anonymous_user) { Fabricate(:anonymous) }
@@ -735,8 +737,6 @@ describe Guardian do
       end
 
       it 'allows members of an authorized group' do
-        user = Fabricate(:user)
-
         secure_category = plain_category
         secure_category.set_permissions(group => :readonly)
         secure_category.save
@@ -940,7 +940,7 @@ describe Guardian do
         end
 
         it 'is true when logged in' do
-          expect(Guardian.new(Fabricate(:user)).can_see?(post_revision)).to be_truthy
+          expect(Guardian.new(user).can_see?(post_revision)).to be_truthy
         end
       end
 
@@ -1184,6 +1184,8 @@ describe Guardian do
   end
 
   describe "can_recover_topic?" do
+    fab!(:topic) { Fabricate(:topic, user: user) }
+    fab!(:post) { Fabricate(:post, user: user, topic: topic) }
 
     it "returns false for a nil user" do
       expect(Guardian.new(nil).can_recover_topic?(topic)).to be_falsey
@@ -1198,11 +1200,6 @@ describe Guardian do
     end
 
     context 'as a moderator' do
-      before do
-        topic.save!
-        post.save!
-      end
-
       describe 'when post has been deleted' do
         it "should return the right value" do
           expect(Guardian.new(moderator).can_recover_topic?(topic)).to be_falsey
@@ -1227,9 +1224,6 @@ describe Guardian do
       fab!(:group_user) { Fabricate(:group_user) }
 
       before do
-        topic.save!
-        post.save!
-
         SiteSetting.enable_category_group_moderation = true
         PostDestroyer.new(moderator, topic.first_post).destroy
         topic.reload
@@ -1262,10 +1256,8 @@ describe Guardian do
     end
 
     context 'as a moderator' do
-      before do
-        topic.save!
-        post.save!
-      end
+      fab!(:topic) { Fabricate(:topic, user: user) }
+      fab!(:post) { Fabricate(:post, user: user, topic: topic) }
 
       describe 'when post has been deleted' do
         it "should return the right value" do
@@ -1418,7 +1410,6 @@ describe Guardian do
         post = Fabricate(:post, topic: topic)
         post.wiki = true
 
-        user = Fabricate(:user)
         expect(Guardian.new(user).can_edit?(post)).to eq(false)
       end
 
@@ -1885,7 +1876,6 @@ describe Guardian do
 
     it 'returns true for a group member with reviewable status' do
       SiteSetting.enable_category_group_moderation = true
-      group = Fabricate(:group)
       GroupUser.create!(group_id: group.id, user_id: user.id)
       topic.category.update!(reviewable_by_group_id: group.id)
       expect(Guardian.new(user).can_review_topic?(topic)).to eq(true)
@@ -1907,7 +1897,6 @@ describe Guardian do
 
     it 'returns true for a group member with reviewable status' do
       SiteSetting.enable_category_group_moderation = true
-      group = Fabricate(:group)
       GroupUser.create!(group_id: group.id, user_id: user.id)
       topic.category.update!(reviewable_by_group_id: group.id)
       expect(Guardian.new(user).can_close_topic?(topic)).to eq(true)
@@ -1929,7 +1918,6 @@ describe Guardian do
 
     it 'returns true for a group member with reviewable status' do
       SiteSetting.enable_category_group_moderation = true
-      group = Fabricate(:group)
       GroupUser.create!(group_id: group.id, user_id: user.id)
       topic.category.update!(reviewable_by_group_id: group.id)
       expect(Guardian.new(user).can_archive_topic?(topic)).to eq(true)
@@ -1951,7 +1939,6 @@ describe Guardian do
 
     it 'returns true for a group member with reviewable status' do
       SiteSetting.enable_category_group_moderation = true
-      group = Fabricate(:group)
       GroupUser.create!(group_id: group.id, user_id: user.id)
       topic.category.update!(reviewable_by_group_id: group.id)
       expect(Guardian.new(user).can_edit_staff_notes?(topic)).to eq(true)
@@ -2157,7 +2144,6 @@ describe Guardian do
 
       it "returns true for category moderators" do
         SiteSetting.enable_category_group_moderation = true
-        group = Fabricate(:group)
         GroupUser.create(group: group, user: user)
         category = Fabricate(:category, reviewable_by_group_id: group.id)
         post.topic.update!(category: category)
@@ -3403,11 +3389,9 @@ describe Guardian do
     it 'Correctly handles owner visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:owners])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3422,11 +3406,9 @@ describe Guardian do
     it 'Correctly handles staff visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:staff])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3441,11 +3423,9 @@ describe Guardian do
     it 'Correctly handles member visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:members])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3459,11 +3439,9 @@ describe Guardian do
 
     it 'Correctly handles logged-on-user visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:logged_on_users])
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3487,11 +3465,9 @@ describe Guardian do
     it 'Correctly handles group members visibility for owner' do
       group = Group.new(name: 'group', members_visibility_level: Group.visibility_levels[:owners])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3506,11 +3482,9 @@ describe Guardian do
     it 'Correctly handles group members visibility for staff' do
       group = Group.new(name: 'group', members_visibility_level: Group.visibility_levels[:staff])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3525,11 +3499,9 @@ describe Guardian do
     it 'Correctly handles group members visibility for member' do
       group = Group.new(name: 'group', members_visibility_level: Group.visibility_levels[:members])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3543,11 +3515,9 @@ describe Guardian do
 
     it 'Correctly handles group members visibility for logged-on-user' do
       group = Group.new(name: 'group', members_visibility_level: Group.visibility_levels[:logged_on_users])
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3571,11 +3541,9 @@ describe Guardian do
     it 'correctly handles owner visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:owners])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3592,11 +3560,9 @@ describe Guardian do
       group2 = Group.new(name: 'group2', visibility_level: Group.visibility_levels[:owners])
       group2.save!
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3611,11 +3577,9 @@ describe Guardian do
     it 'correctly handles staff visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:staff])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3630,11 +3594,9 @@ describe Guardian do
     it 'correctly handles member visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:members])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3649,11 +3611,9 @@ describe Guardian do
     it 'correctly handles logged-on-user visible groups' do
       group = Group.new(name: 'group', visibility_level: Group.visibility_levels[:logged_on_users])
 
-      member = Fabricate(:user)
       group.add(member)
       group.save!
 
-      owner = Fabricate(:user)
       group.add_owner(owner)
       group.reload
 
@@ -3670,11 +3630,9 @@ describe Guardian do
       group2 = Group.new(name: 'group2', visibility_level: Group.visibility_levels[:members])
       group2.save!
 
-      member = Fabricate(:user)
       group1.add(member)
       group1.save!
 
-      owner = Fabricate(:user)
       group1.add_owner(owner)
       group1.reload
 

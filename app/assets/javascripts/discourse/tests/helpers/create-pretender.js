@@ -136,8 +136,8 @@ export function applyDefaultHandlers(pretender) {
   pretender.get("/tags/filter/search", () => {
     return response({
       results: [
-        { text: "monkey", count: 1 },
-        { text: "gazelle", count: 2 },
+        { id: "monkey", name: "monkey", count: 1 },
+        { id: "gazelle", name: "gazelle", count: 2 },
       ],
     });
   });
@@ -287,7 +287,7 @@ export function applyDefaultHandlers(pretender) {
 
   pretender.get("/t/id_for/:slug", () => {
     return response({
-      id: 280,
+      topic_id: 280,
       slug: "internationalization-localization",
       url: "/t/internationalization-localization/280",
     });

@@ -46,6 +46,9 @@ class Post < ActiveRecord::Base
   has_many :uploads, through: :post_uploads
 
   has_one :post_stat
+
+  # When we are ready we can add as: :bookmarkable here to use the
+  # polymorphic association.
   has_many :bookmarks
 
   has_one :incoming_email
@@ -571,7 +574,7 @@ class Post < ActiveRecord::Base
         5.seconds,
         :send_system_message,
         user_id: user.id,
-        message_type: message,
+        message_type: message.to_s,
         message_options: options
       )
     end

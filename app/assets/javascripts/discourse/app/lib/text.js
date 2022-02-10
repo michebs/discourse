@@ -23,6 +23,7 @@ function getOpts(opts) {
       formatUsername,
       watchedWordsReplace: context.site.watched_words_replace,
       watchedWordsLink: context.site.watched_words_link,
+      additionalOptions: context.site.markdown_additional_options,
     },
     opts
   );
@@ -47,6 +48,13 @@ export function generateCookFunction(options) {
   return loadMarkdownIt().then(() => {
     const prettyText = createPrettyText(options);
     return (text) => prettyText.cook(text);
+  });
+}
+
+export function generateLinkifyFunction(options) {
+  return loadMarkdownIt().then(() => {
+    const prettyText = createPrettyText(options);
+    return prettyText.opts.engine.linkify;
   });
 }
 

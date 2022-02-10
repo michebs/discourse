@@ -267,14 +267,6 @@ basic:
     client: true
     default: true
     hidden: true
-  enable_experimental_composer_uploader:
-    client: true
-    default: false
-    hidden: true
-  enable_experimental_backup_uploader:
-    client: true
-    default: false
-    hidden: true
   enable_direct_s3_uploads:
     client: true
     default: false
@@ -409,6 +401,9 @@ login:
       - "select_account"
   google_oauth2_hd:
     default: ""
+  google_oauth2_hd_groups:
+    default: false
+    validator: GoogleOauth2HdGroupsValidator
   enable_twitter_logins:
     default: false
   twitter_consumer_key:
@@ -510,11 +505,15 @@ login:
     default: ""
     type: list
     list_type: simple
+  normalize_emails:
+    default: false
   auto_approve_email_domains:
     default: ""
     type: list
     list_type: simple
-  hide_email_address_taken: false
+  hide_email_address_taken:
+    client: true
+    default: false
   log_out_strict: false
   pending_users_reminder_delay_minutes:
     min: -1
@@ -585,7 +584,7 @@ users:
     client: true
     default: true
   invite_expiry_days:
-    default: 30
+    default: 90
     client: true
     max: 36500
   invites_per_page:
@@ -687,7 +686,6 @@ users:
     default: 2000
     hidden: true
   use_email_for_username_and_name_suggestions:
-    hidden: true
     default: false
 
 groups:
@@ -826,6 +824,8 @@ posting:
   delete_removed_posts_after:
     client: true
     default: 24
+  notify_users_after_responses_deleted_on_flagged_post:
+    default: false
   traditional_markdown_linebreaks:
     client: true
     default: false
@@ -1014,10 +1014,6 @@ posting:
   watched_words_regular_expressions:
     client: true
     default: false
-  enable_advanced_editor_preview_sync:
-    hidden: true
-    default: false
-    client: true
   enable_diffhtml_preview:
     default: false
     client: true
@@ -1428,7 +1424,7 @@ files:
   strip_image_metadata: true
   min_ratio_to_crop:
     type: float
-    default: 0.45 # 90% of 18:9
+    default: 0.22
     min: 0
     max: 1
   simultaneous_uploads:
@@ -1598,6 +1594,9 @@ security:
     regex: "^(Lax|Strict|Disabled|None)$"
   enable_escaped_fragments: true
   allow_index_in_robots_txt: true
+  allow_indexing_non_canonical_urls:
+    default: true
+    hidden: true
   moderators_manage_categories_and_groups: false
   moderators_change_post_ownership:
     client: true
@@ -1701,7 +1700,7 @@ onebox:
       zh_TW: 200
   blocked_onebox_domains:
     default: ""
-    type: list
+    type: host_list
     list_type: compact
   max_oneboxes_per_post:
     default: 50
@@ -2035,7 +2034,12 @@ search:
       zh_TW: 1
       ko: 1
       ja: 1
-  search_tokenize_chinese_japanese_korean: false
+  search_tokenize_chinese:
+    default: false
+    validator: "SearchTokenizeChineseValidator"
+  search_tokenize_japanese:
+    default: false
+    validator: "SearchTokenizeJapaneseValidator"
   search_prefer_recent_posts: false
   search_recent_posts_size:
     default: 1000000
@@ -2347,6 +2351,10 @@ uncategorized:
   always_include_topic_excerpts:
     default: false
     hidden: true
+
+  allow_bulk_invite:
+    default: true
+    client: true
 
   max_bulk_invites:
     default: 50000

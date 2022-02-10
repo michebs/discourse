@@ -217,8 +217,6 @@ ja:
       <p>パスワードを覚えている場合は、<a href="%{base_url}/login">ログイン</a>してください。</p>
 
       <p>そうでない場合は、<a href="%{base_url}/password-reset">パスワードをリセット</a>してください。</p>
-    not_found_template_link: |
-      <p><a href="%{base_url}">%{site_name}</a> への招待を引き換えられなくなりました。あなたを招待した人に新しい招待を送るようリクエストしてください。</p>
     user_exists: "<b>%{email}</b> を招待する必要はありません。 <a href='%{base_path}/u/%{username}/summary'> のアカウントはすでに存在します！</a>"
     invite_exists: "<b>%{email}</b> はすでに招待済みです。"
     invalid_email: "%{email} は有効なメールアドレスではありません。"
@@ -314,8 +312,6 @@ ja:
   links_require_trust: "投稿にリンクを含めることはできません。"
   too_many_links:
     other: "新規ユーザーは投稿につき %{count} 件のリンクしか追加できません。"
-  contains_blocked_word: "投稿に許可されていない言葉が含まれています: %{word}"
-  contains_blocked_words: "投稿に許可されていない語が複数含まれています: %{words}"
   spamming_host: "このホストへのリンクを投稿できません。"
   user_is_suspended: "凍結中のユーザーは投稿できません。"
   topic_not_found: "問題が発生しました。トピックがクローズしたか、閲覧中に削除された可能性があります。"
@@ -829,13 +825,6 @@ ja:
   draft_backup:
     pm_title: "進行中のトピックのバックアップ下書き"
     pm_body: "バックアップの下書きを含むトピック"
-  user_activity:
-    no_bookmarks:
-      self: "ブックマークした投稿はありません。ブックマークを使用すると、特定の投稿を素早く参照できます。"
-      search: "指定された検索クエリでブックマークは見つかりませんでした。"
-      others: "ブックマークはありません。"
-    no_drafts:
-      self: "下書きはありません。トピックで返信の作成を始めると、新しい下書きとして自動保存されます。"
   email_settings:
     pop3_authentication_error: "指定された POP3 の資格情報に問題がありました。ユーザー名とパスワードを確認して、もう一度お試しください。"
     imap_authentication_error: "指定された IMAP の資格情報に問題がありました。ユーザー名とパスワードを確認して、もう一度お試しください。"
@@ -1274,6 +1263,18 @@ ja:
         ignores_count: 無視数
         mutes_count: ミュート数
       description: "多数のユーザーによってミュートまたは無視されたユーザー。"
+    top_users_by_likes_received:
+      labels:
+        user: ユーザー
+        qtt_like: '「いいね！」された数'
+    top_users_by_likes_received_from_inferior_trust_level:
+      labels:
+        user: ユーザー
+        qtt_like: '「いいね！」された数'
+    top_users_by_likes_received_from_a_variety_of_people:
+      labels:
+        user: ユーザー
+        qtt_like: '「いいね！」された数'
   dashboard:
     rails_env_warning: "サーバーは %{env} モードで実行中です。"
     host_names_warning: "現在 config/database.yml ファイルは、デフォルトの localhost をホスト名として使用しています。あなたのサイトのホスト名に更新してください。"
@@ -1321,7 +1322,6 @@ ja:
     min_personal_message_title_length: "メッセージのタイトルの最小文字数"
     max_emojis_in_title: "トピックタイトルに許可される最大絵文字数"
     min_search_term_length: "有効な検索語の最小文字数"
-    search_tokenize_chinese_japanese_korean: "CJK 以外のサイトでも強制検索で中国語/日本語/韓国語をトークン化する"
     search_prefer_recent_posts: "大規模なフォーラムの検索が遅い場合、このオプションは先により直近の投稿のインデックスを試す"
     search_recent_posts_size: "インデックスに保持する直近の投稿の数"
     log_search_queries: "ユーザーが実行した検索クエリをログに記録する"
@@ -1364,7 +1364,6 @@ ja:
     show_pinned_excerpt_mobile: "モバイルビューで固定トピックの抜粋を表示する。"
     show_pinned_excerpt_desktop: "デスクトップビューで固定トピックの抜粋を表示する。"
     post_onebox_maxlength: "Discourse OneBox 投稿の最大文字数。"
-    blocked_onebox_domains: "ワンボックス化されないドメインのリスト。"
     allowed_inline_onebox_domains: "タイトルなしでリンクされた場合、ミニチュア形式でワンボックス化されるドメインのリスト"
     enable_inline_onebox_on_all_domains: "inline_onebox_domain_allowlist サイト設定を無視し、すべてのドメインでインラインのワンボックスを許可する。"
     force_custom_user_agent_hosts: "すべてのリクエストでカスタムワンボックスユーザーエージェントを使用するホスト (特にユーザーエージェントごとにアクセスを制限するホストで役立ちます)。"
@@ -1449,7 +1448,6 @@ ja:
     allowed_iframes: "Discourse が投稿で安全に許可できる iframe src ドメインプレフィックスのリスト"
     allowed_crawler_user_agents: "サイトへのアクセスを許可する必要のあるウェブクローラーのユーザーエージェント。警告！これを設定すると、ここにリストされていないすべてのクローラーが拒否されます！"
     blocked_crawler_user_agents: "サイトへのアクセスを許可してはいけないウェブクローラーを識別する、ユーザーエージェント文字列の大文字と小文字を区別しない一意の語。ホワイトリストが定義されている場合は適用されません。"
-    slow_down_crawler_user_agents: "Crawl-delay ディレクティブを使用して robots.txt でレート制限する必要があるウェブクローラーのユーザーエージェント"
     slow_down_crawler_rate: "このレートに slow_down_crawler_user_agents が指定されている場合、このレートはすべてのクローラーに適用されます (リクエスト間の遅延秒数)"
     content_security_policy: "Content-Security-Policy を有効にする"
     content_security_policy_report_only: "Content-Security-Policy-Report-Only を有効にする"
@@ -1487,7 +1485,6 @@ ja:
     blocked_email_domains: "ユーザーがアカウント登録をすることができないメールドメインの、パイプ区切りのリスト。例: mailinator.com|trashmail.net"
     allowed_email_domains: "ユーザー登録に必要なメールドメインのパイプ区切りのリスト。警告: 指定したメールドメイン以外のユーザーの登録は許可されません！"
     auto_approve_email_domains: "このドメインリストのメールアドレスを持つユーザーは自動的に承認されます。"
-    hide_email_address_taken: "登録中およびパスワード忘れのフォームを使用中に、指定されたメールアドレスのアカウントが既に存在することをユーザーに通知しない。"
     log_out_strict: "ログアウトした際に、そのユーザーの全デバイスのセッションをログアウトする"
     version_checks: "Discourse に Ping してバージョン更新を確認し、<a href='%{base_path}/admin' target='_blank'>/admin</a> ダッシュボードに新しいバージョンに関するメッセージを表示する"
     new_version_emails: "Discourse の新しいバージョンが利用可能になった際に contact_email アドレスにメールで通知する"
@@ -2247,11 +2244,6 @@ ja:
     already_suspended: "ユーザーは %{staff} によって %{time_ago}に凍結されています。"
     cannot_delete_has_posts:
       other: "ユーザー %{username} には公開トピックまたは個人メッセージに %{count} 件の投稿があるため、削除できません。"
-  reviewables_reminder:
-    submitted:
-      other: "%{count} 時間前に項目が送信されました。[レビューしてください](%{base_path}/review)。"
-    subject_template:
-      other: "%{count} 個の項目にレビューが必要です"
   unsubscribe_mailer:
     title: "購読解除メーラー"
     subject_template: "今後 %{site_title} からの更新メールの受信を希望しないことを確認してください"

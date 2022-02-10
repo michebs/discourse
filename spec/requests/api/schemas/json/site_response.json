@@ -97,6 +97,12 @@
         },
         "chat_message": {
           "type": "integer"
+        },
+        "chat_invitation": {
+          "type": "integer"
+        },
+        "chat_group_mention": {
+          "type": "integer"
         }
       },
       "required": [
@@ -128,7 +134,10 @@
         "votes_released",
         "event_reminder",
         "event_invitation",
-        "chat_mention"
+        "chat_mention",
+        "chat_message",
+        "chat_invitation",
+        "chat_group_mention"
       ]
     },
     "post_types": {
@@ -358,6 +367,9 @@
     "wizard_required": {
       "type": "boolean"
     },
+    "can_associate_groups": {
+      "type": "boolean"
+    },
     "topic_featured_link_allowed_category_ids": {
       "type": "array",
       "items": [
@@ -453,6 +465,9 @@
         "string",
         "null"
       ]
+    },
+    "markdown_additional_options" : {
+      "type": "object"
     },
     "categories": {
       "type": "array",

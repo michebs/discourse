@@ -61,7 +61,7 @@ async function runAllTests() {
     // Workaround for intermittent CI error caused by
     // https://github.com/GoogleChrome/chrome-launcher/issues/145
     try {
-      protocol = await CDP({ port: chrome.port });
+      protocol = await CDP({ port: chrome.port, host: "127.0.0.1" });
     } catch (e) {
       if (e.message === "No inspectable targets" && connectAttempts < 50) {
         connectAttempts++;
@@ -148,7 +148,7 @@ async function runAllTests() {
     });
   }
 
-  console.log("navigate to ", url);
+  console.log("navigate to", url);
   Page.navigate({ url });
 
   Page.loadEventFired(async () => {
@@ -279,7 +279,7 @@ function logQUnit() {
     console.log("Slowest tests");
     console.log("----------------------------------------------");
     let ary = Object.keys(durations).map((key) => ({
-      key: key,
+      key,
       value: durations[key],
     }));
     ary.sort((p1, p2) => p2.value - p1.value);

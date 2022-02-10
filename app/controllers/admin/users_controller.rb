@@ -127,7 +127,7 @@ class Admin::UsersController < Admin::AdminController
     if message.present?
       Jobs.enqueue(
         :critical_user_email,
-        type: :account_suspended,
+        type: "account_suspended",
         user_id: @user.id,
         user_history_id: user_history.id
       )
@@ -328,7 +328,7 @@ class Admin::UsersController < Admin::AdminController
   def activate
     guardian.ensure_can_activate!(@user)
     # ensure there is an active email token
-    @user.email_tokens.create(email: @user.email) unless @user.email_tokens.active.exists?
+    @user.email_tokens.create!(email: @user.email, scope: EmailToken.scopes[:signup]) if !@user.email_tokens.active.exists?
     @user.activate
     StaffActionLogger.new(current_user).log_user_activate(@user, I18n.t('user.activated_by_staff'))
     render json: success_json
@@ -368,7 +368,7 @@ class Admin::UsersController < Admin::AdminController
     if silencer.silence
       Jobs.enqueue(
         :critical_user_email,
-        type: :account_silenced,
+        type: "account_silenced",
         user_id: @user.id,
         user_history_id: silencer.user_history.id
       )
@@ -412,7 +412,7 @@ class Admin::UsersController < Admin::AdminController
 
     Jobs.enqueue(
       :critical_user_email,
-      type: :account_second_factor_disabled,
+      type: "account_second_factor_disabled",
       user_id: @user.id
     )
 
@@ -462,8 +462,8 @@ class Admin::UsersController < Admin::AdminController
     return render body: nil, status: 404 unless SiteSetting.enable_discourse_connect
 
     begin
-      sso = DiscourseSingleSignOn.parse("sso=#{params[:sso]}&sig=#{params[:sig]}", secure_session: secure_session)
-    rescue DiscourseSingleSignOn::ParseError
+      sso = DiscourseConnect.parse("sso=#{params[:sso]}&sig=#{params[:sig]}", secure_session: secure_session)
+    rescue DiscourseConnect::ParseError
       return render json: failed_json.merge(message: I18n.t("discourse_connect.login_error")), status: 422
     end
 
@@ -472,7 +472,7 @@ class Admin::UsersController < Admin::AdminController
       render_serialized(user, AdminDetailedUserSerializer, root: false)
     rescue ActiveRecord::RecordInvalid => ex
       render json: failed_json.merge(message: ex.message), status: 403
-    rescue DiscourseSingleSignOn::BlankExternalId => ex
+    rescue DiscourseConnect::BlankExternalId => ex
       render json: failed_json.merge(message: I18n.t('discourse_connect.blank_id_error')), status: 422
     end
   end
